@@ -5,7 +5,9 @@ name = "pypi"
 
 [packages]
 feedparser = "*"
+atproto = "*"
 html2text = "*"
+python-dotenv = "*"
 
 [dev-packages]
 
