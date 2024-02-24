@@ -8,6 +8,7 @@ feedparser = "*"
 atproto = "*"
 html2text = "*"
 python-dotenv = "*"
+tweepy = "*"
 
 [dev-packages]
 
