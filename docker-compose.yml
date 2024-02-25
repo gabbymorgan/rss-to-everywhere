@@ -1,0 +1,17 @@
+version: "3"
+
+services:
+  rss-to-everywhere:
+    image: rss-to-everywhere
+    container_name: rss-to-everywhere
+    environment:
+      - RSS_URL=${RSS_URL}
+      - BSKY_USER=${BSKY_USER}
+      - BSKY_PASSWORD=${BSKY_PASSWORD}
+      - API_KEY=${API_KEY}
+      - API_SECRET=${API_SECRET}
+      - BEARER_TOKEN=${BEARER_TOKEN}
+      - ACCESS_TOKEN=${ACCESS_TOKEN}
+      - ACCESS_TOKEN_SECRET=${ACCESS_TOKEN_SECRET}
+      - RSS_URLS=${RSS_URLS}
+      - PLATFORMS=${PLATFORMS}
