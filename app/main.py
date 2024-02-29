@@ -1,10 +1,10 @@
 import calendar
 import os
-import re
 import textwrap
 import time
 import feedparser
 import tweepy
+import nltk.data
 from dotenv import load_dotenv
 from atproto import Client, client_utils
 from html2text import html2text
@@ -21,32 +21,18 @@ ACCESS_TOKEN = os.environ["ACCESS_TOKEN"]
 ACCESS_TOKEN_SECRET = os.environ["ACCESS_TOKEN_SECRET"]
 
 
-def truncate_too_long_text(text, width):
-    return textwrap.shorten(
-        text, width, placeholder="...")
-
-
-def format_rss_to_text(entry, character_limit):
+def format_rss_to_text(entry):
     text_from_html = html2text(entry.summary)
-
-    if hasattr(entry, 'media_content'):
-        if len(entry.media_content) < 1:
-            text_from_html += " " + entry.media_content[0]["url"]
-
-    if len(text_from_html) > character_limit:
-        return truncate_too_long_text(text_from_html, character_limit)
-
-    else:
-        return text_from_html
+    sent_detector = nltk.data.load('tokenizers/punkt/english.pickle')
+    return sent_detector.tokenize(text_from_html)[0]
 
 
 def post_to_bluesky(entry):
-    content = format_rss_to_text(entry, 300, 28)
-    # TODO: link to original post when too long
-    # tb = client_utils.TextBuilder()
-    # tb.link(content[1], f'https://{content[1]}')
-    # tb.text(content[0])
-    bsky_client.send_post(content)
+    content = format_rss_to_text(entry)
+    tb = client_utils.TextBuilder()
+    tb.text(content)
+    tb.link(entry.link, entry.link)
+    bsky_client.send_post(tb)
 
 
 def post_to_mastodon():
@@ -54,15 +40,15 @@ def post_to_mastodon():
 
 
 def post_to_twitter(entry):
-    content = format_rss_to_text(entry, 280, 23)
-    print(content)
-    print(len(content))
-    twitter_client.create_tweet(text=content)
+    twitter_client.create_tweet(
+        text=format_rss_to_text(entry) + " " + entry.link)
 
 
 if __name__ == "__main__":
     start_time = int(time.time())
     print("Started at", start_time)
+    nltk.download('punkt')
+    print("Punkt downloaded.")
     old_entries = []
     twitter_client = tweepy.Client(
         consumer_key=API_KEY,

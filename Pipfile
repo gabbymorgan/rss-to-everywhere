@@ -9,6 +9,7 @@ atproto = "*"
 html2text = "*"
 python-dotenv = "*"
 tweepy = "*"
+nltk = "*"
 
 [dev-packages]
 
