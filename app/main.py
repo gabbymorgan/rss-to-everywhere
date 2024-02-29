@@ -21,39 +21,32 @@ ACCESS_TOKEN = os.environ["ACCESS_TOKEN"]
 ACCESS_TOKEN_SECRET = os.environ["ACCESS_TOKEN_SECRET"]
 
 
-def format_rss_to_text(entry, character_limit, hyperlink_max_length):
-    html_without_a_tags = re.sub(
-        r'<a href=\"(.*?)\".*/a>', r'\1', entry.summary)
-    text_from_html = html2text(html_without_a_tags)[:-2]
+def truncate_too_long_text(text, width):
+    return textwrap.shorten(
+        text, width, placeholder="...")
+
+
+def format_rss_to_text(entry, character_limit):
+    text_from_html = html2text(entry.summary)
 
     if hasattr(entry, 'media_content'):
-        media_url = entry.media_content[0]["url"]
-        too_long_with_media_url = len(
-            text_from_html) + min(len(media_url), hyperlink_max_length) > character_limit
-        if (len(entry.media_content) > 2 or too_long_with_media_url):
-            summary = textwrap.shorten(
-                text_from_html, width=character_limit - hyperlink_max_length, placeholder="...")
-            return f'{summary} {entry.link}'
-        else:
-            return f'{text_from_html}{media_url}'
-    elif len(text_from_html) > character_limit:
-        summary = textwrap.shorten(
-            text_from_html, width=character_limit - hyperlink_max_length, placeholder="...")
-        return f'{text_from_html} {entry.link}'
+        if len(entry.media_content) < 1:
+            text_from_html += " " + entry.media_content[0]["url"]
+
+    if len(text_from_html) > character_limit:
+        return truncate_too_long_text(text_from_html, character_limit)
+
     else:
         return text_from_html
 
 
 def post_to_bluesky(entry):
-    tb = client_utils.TextBuilder()
     content = format_rss_to_text(entry, 300, 28)
-    content_with_link = content.split("https://")
-    if len(content_with_link) == 2:
-        tb.text(content_with_link[0])
-        tb.link(content_with_link[1], f'https://{content_with_link[1]}')
-        bsky_client.send_post(tb)
-    else:
-        bsky_client.send_post(content=content)
+    # TODO: link to original post when too long
+    # tb = client_utils.TextBuilder()
+    # tb.link(content[1], f'https://{content[1]}')
+    # tb.text(content[0])
+    bsky_client.send_post(content)
 
 
 def post_to_mastodon():
@@ -62,7 +55,9 @@ def post_to_mastodon():
 
 def post_to_twitter(entry):
     content = format_rss_to_text(entry, 280, 23)
-    twitter_client.create_tweet(content)
+    print(content)
+    print(len(content))
+    twitter_client.create_tweet(text=content)
 
 
 if __name__ == "__main__":
@@ -94,4 +89,4 @@ if __name__ == "__main__":
                     if 'twitter' in PLATFORMS:
                         post_to_twitter(entry)
                     old_entries.append(entry.id)
-        time.sleep(300)
+        time.sleep(10)
