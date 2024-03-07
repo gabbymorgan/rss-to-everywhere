@@ -79,7 +79,6 @@ if __name__ == '__main__':
         for rss_url in RSS_URLS:
             feed = feedparser.parse(rss_url)
             for entry in feed.entries:
-                print(entry.summary)
                 if entry.id in old_entries:
                     pass
                 elif (calendar.timegm(feed.entries[0].published_parsed) < start_time):
