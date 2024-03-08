@@ -21,6 +21,7 @@ ACCESS_TOKEN = os.environ['ACCESS_TOKEN']
 ACCESS_TOKEN_SECRET = os.environ['ACCESS_TOKEN_SECRET']
 MASTODON_BASE_URL = os.environ['MASTODON_BASE_URL']
 MASTODON_APP_TOKEN = os.environ['MASTODON_APP_TOKEN']
+REFRESH_INTERVAL = int(os.environ['REFRESH_INTERVAL'])
 
 
 def html_to_text(htmlString):
@@ -42,7 +43,7 @@ def post_to_bluesky(entry):
 
 
 def post_to_mastodon(entry):
-    status = html_to_text(entry.summary)
+    status = f'{entry.title}\n{entry.description}\n{entry.link}'
     print(status)
     requests.post(f'{MASTODON_BASE_URL}/api/v1/statuses',
                   data=f'status={status}', headers={'Authorization': f'Bearer {MASTODON_APP_TOKEN}'})
@@ -52,6 +53,10 @@ def post_to_mastodon(entry):
 def post_to_twitter(entry):
     twitter_client.create_tweet(
         text=shorten_text(entry) + ' ' + entry.link)
+
+
+def post_to_console(entry):
+    print(f'{entry.title}\n{entry.description}\n{entry.link}')
 
 
 if __name__ == '__main__':
@@ -79,6 +84,8 @@ if __name__ == '__main__':
         for rss_url in RSS_URLS:
             feed = feedparser.parse(rss_url)
             for entry in feed.entries:
+                if 'console' in PLATFORMS:
+                    post_to_console(entry)
                 if entry.id in old_entries:
                     pass
                 elif (calendar.timegm(feed.entries[0].published_parsed) < start_time):
@@ -91,4 +98,4 @@ if __name__ == '__main__':
                     if 'mastodon' in PLATFORMS:
                         post_to_mastodon(entry)
                     old_entries.append(entry.id)
-        time.sleep(10)
+        time.sleep(REFRESH_INTERVAL)
