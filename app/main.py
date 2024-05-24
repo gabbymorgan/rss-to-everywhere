@@ -22,6 +22,7 @@ ACCESS_TOKEN_SECRET = os.environ['ACCESS_TOKEN_SECRET']
 MASTODON_BASE_URL = os.environ['MASTODON_BASE_URL']
 MASTODON_APP_TOKEN = os.environ['MASTODON_APP_TOKEN']
 REFRESH_INTERVAL = int(os.environ['REFRESH_INTERVAL'])
+DISCORD_URL = os.environ['DISCORD_URL']
 
 
 def html_to_text(htmlString):
@@ -53,6 +54,13 @@ def post_to_mastodon(entry):
 def post_to_twitter(entry):
     twitter_client.create_tweet(
         text=shorten_text(entry) + ' ' + entry.link)
+
+
+def post_to_discord(entry):
+    print('right on')
+    print('sending to', DISCORD_URL)
+    requests.post(DISCORD_URL,
+                  json={'content': entry.link}, headers={'Content-Type': 'application/json'})
 
 
 def post_to_console(entry):
@@ -97,5 +105,7 @@ if __name__ == '__main__':
                         post_to_twitter(entry)
                     if 'mastodon' in PLATFORMS:
                         post_to_mastodon(entry)
+                    if 'discord' in PLATFORMS:
+                        post_to_discord(entry)
                     old_entries.append(entry.id)
         time.sleep(REFRESH_INTERVAL)
